@@ -235,7 +235,7 @@ public class IronStockSyncPlugin extends Plugin
 			public void onResponse(Call call, Response response)
 			{
 				boolean success = false;
-				String detail;
+				String detail = "unknown response";
 
 				try (response)
 				{
@@ -277,7 +277,11 @@ public class IronStockSyncPlugin extends Plugin
 								}
 								catch (RuntimeException ex)
 								{
-									String contentType = response.header("Content-Type", "unknown");
+									String contentType = response.header("Content-Type");
+									if (contentType == null)
+									{
+										contentType = "unknown";
+									}
 									String preview = responseText
 										.replaceAll("\\s+", " ")
 										.trim();
