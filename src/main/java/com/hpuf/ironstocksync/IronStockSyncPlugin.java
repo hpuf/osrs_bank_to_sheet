@@ -252,13 +252,44 @@ public class IronStockSyncPlugin extends Plugin
 						}
 						else
 						{
-							SyncResponse syncResponse = gson.fromJson(body.charStream(), SyncResponse.class);
-							success = syncResponse != null && syncResponse.ok;
-							detail = success
-								? (syncResponse.ignored ? "accepted (already newer)" : "accepted")
-								: (syncResponse == null || syncResponse.error == null
-									? "invalid response"
-									: syncResponse.error);
+							String responseText;
+							try
+							{
+								responseText = body.string();
+							}
+							catch (IOException ex)
+							{
+								detail = "unable to read response: " + ex.getMessage();
+								responseText = null;
+							}
+
+							if (responseText != null)
+							{
+								try
+								{
+									SyncResponse syncResponse = gson.fromJson(responseText, SyncResponse.class);
+									success = syncResponse != null && syncResponse.ok;
+									detail = success
+										? (syncResponse.ignored ? "accepted (already newer)" : "accepted")
+										: (syncResponse == null || syncResponse.error == null
+											? "invalid response"
+											: syncResponse.error);
+								}
+								catch (RuntimeException ex)
+								{
+									String contentType = response.header("Content-Type", "unknown");
+									String preview = responseText
+										.replaceAll("\\s+", " ")
+										.trim();
+									if (preview.length() > 240)
+									{
+										preview = preview.substring(0, 240) + "...";
+									}
+
+									detail = "unexpected response (content-type " + contentType
+										+ ", final URL " + response.request().url() + "): " + preview;
+								}
+							}
 						}
 					}
 				}
